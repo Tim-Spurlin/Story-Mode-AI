@@ -1,0 +1,150 @@
+<div class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-gray-900 relative">
+  
+  <main class="w-full max-w-4xl mx-auto bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl shadow-black/30 overflow-hidden border border-gray-700">
+    <div class="p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-300">
+          Story Mode AI
+        </h1>
+        <p class="text-gray-400 mt-2">Transform your audio memories into a visual narrative.</p>
+      </div>
+
+      @switch (status()) {
+        @case ('idle') {
+          <div class="space-y-6">
+            <div>
+              <label for="audio-upload" class="block text-lg font-medium text-gray-300 mb-2">1. Upload Your Audio Story</label>
+              <div class="mt-2 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md">
+                <div class="space-y-1 text-center">
+                  <icon-upload class="mx-auto h-12 w-12 text-gray-500"></icon-upload>
+                  <div class="flex text-sm text-gray-400">
+                    <label for="audio-upload" class="relative cursor-pointer bg-gray-800 rounded-md font-medium text-blue-400 hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 focus-within:ring-blue-500">
+                      <span>Upload an audio file</span>
+                      <input id="audio-upload" name="audio-upload" type="file" class="sr-only" accept="audio/*" (change)="handleFileChange($event)">
+                    </label>
+                    <p class="pl-1">or drag and drop</p>
+                  </div>
+                  @if (audioFile(); as file) {
+                    <p class="text-xs text-teal-400 pt-2">{{ file.name }}</p>
+                  } @else {
+                    <p class="text-xs text-gray-500">MP3, WAV, etc. up to 1 hour</p>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-lg font-medium text-gray-300 mb-2">2. Add Character Profiles</label>
+              <div class="space-y-4">
+                @for (char of characters(); track char.id) {
+                  <div class="p-4 bg-gray-900/50 rounded-lg border border-gray-700 grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+                    <div class="flex flex-col items-center justify-center">
+                        <label [for]="'photo-' + char.id" class="cursor-pointer">
+                            @if (char.photoUrl) {
+                                <img [src]="char.photoUrl" alt="Character photo" class="h-24 w-24 rounded-full object-cover bg-gray-700">
+                            } @else {
+                                <div class="h-24 w-24 rounded-full bg-gray-700 flex items-center justify-center text-gray-500">
+                                    <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path d="M13 8a3 3 0 11-6 0 3 3 0 016 0zM5.5 18.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5H6.25a.75.75 0 01-.75-.75zM17 14.25a4.25 4.25 0 00-8.5 0v.25a.75.75 0 00.75.75h7a.75.75 0 00.75-.75v-.25z"></path></svg>
+                                </div>
+                            }
+                        </label>
+                        <input type="file" [id]="'photo-' + char.id" class="sr-only" accept="image/*" (change)="handleCharacterPhoto($event, char.id)">
+                    </div>
+                    <div class="md:col-span-2 space-y-2">
+                      <input type="text"
+                             [value]="char.name"
+                             (input)="updateCharacter(char.id, 'name', $any($event.target).value)"
+                             placeholder="Character Name"
+                             class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-gray-200 focus:ring-1 focus:ring-blue-500">
+                      <textarea [value]="char.description"
+                                (input)="updateCharacter(char.id, 'description', $any($event.target).value)"
+                                rows="3"
+                                class="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-gray-200 focus:ring-1 focus:ring-blue-500 resize-y"
+                                placeholder="Describe their appearance and personality for visual consistency..."></textarea>
+                    </div>
+                    @if (characters().length > 1) {
+                        <button (click)="removeCharacter(char.id)" class="absolute top-2 right-2 text-gray-500 hover:text-red-400 transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    }
+                  </div>
+                }
+                <button (click)="addCharacter()" class="w-full text-blue-400 hover:text-blue-300 bg-gray-900/50 hover:bg-gray-800/70 border border-gray-700 rounded-lg py-2 transition-colors">
+                  + Add Another Character
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label for="story-context" class="block text-lg font-medium text-gray-300 mb-2">3. Optional: Story Context</label>
+              <textarea id="story-context"
+                        [value]="storyContext()"
+                        (input)="handleContextInput($event)"
+                        rows="6"
+                        class="w-full p-4 bg-gray-900/70 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 resize-y"
+                        placeholder="Provide background info, the story's theme, or details about the main character's life to give the AI a deeper understanding..."></textarea>
+            </div>
+
+            <div class="pt-4">
+              <button (click)="generateStory()"
+                      [disabled]="!audioFile()"
+                      class="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500 transition-all duration-300 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-400">
+                Generate Video Story
+              </button>
+            </div>
+          </div>
+        }
+        @case ('processing') {
+          <div class="flex flex-col items-center justify-center space-y-6 py-12">
+            <icon-spinner class="h-16 w-16 text-blue-500"></icon-spinner>
+            <div class="text-center">
+                <p class="text-xl font-semibold text-gray-200">{{ progress().stage }}...</p>
+                <p class="text-gray-400 mt-2">{{ progress().message }}</p>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div class="bg-gradient-to-r from-blue-500 to-teal-400 h-2.5 rounded-full transition-all duration-500" [style.width.%]="progressPercentage()"></div>
+            </div>
+            <p class="text-sm text-gray-500">This process can take several minutes. Please be patient.</p>
+          </div>
+        }
+        @case ('complete') {
+          <div class="space-y-6">
+            <div class="text-center">
+              <h2 class="text-3xl font-bold text-gray-100">Your Story is Ready!</h2>
+            </div>
+            <div class="aspect-video bg-black rounded-lg overflow-hidden relative shadow-lg shadow-black/50">
+                <video #videoPlayer
+                    class="w-full h-full"
+                    [src]="currentClipUrl()"
+                    (ended)="handleVideoEnded()"
+                    playsinline
+                    muted>
+                </video>
+                @if (audioUrl()) {
+                    <audio #audioPlayer [src]="audioUrl()"></audio>
+                }
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <button (click)="playStory()" class="w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500 transition-all duration-300">
+                <icon-video class="w-6 h-6 mr-2"></icon-video> Play Story
+              </button>
+              <button (click)="startOver()" class="w-full flex justify-center items-center py-3 px-6 border border-gray-600 rounded-lg shadow-sm text-lg font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-gray-500 transition-all duration-300">
+                Start Over
+              </button>
+            </div>
+          </div>
+        }
+        @case ('error') {
+          <div class="text-center space-y-6 py-12">
+            <icon-error class="mx-auto h-16 w-16 text-red-500"></icon-error>
+            <h2 class="text-3xl font-bold text-red-400">An Error Occurred</h2>
+            <p class="text-gray-300 bg-red-900/50 p-4 rounded-lg border border-red-700">{{ errorMsg() }}</p>
+            <button (click)="startOver()" class="mt-4 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500">
+              Try Again
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </main>
+</div>

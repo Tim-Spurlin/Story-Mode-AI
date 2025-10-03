@@ -1,0 +1,5 @@
+{
+  "name": "Story Mode AI",
+  "description": "Transforms a written story or transcript into a silent video narrative by generating a sequence of video clips. You can optionally provide an audio file to play alongside the generated video.",
+  "requestFramePermissions": []
+}
